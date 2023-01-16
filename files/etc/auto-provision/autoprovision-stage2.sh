@@ -2,7 +2,7 @@
 
 # autoprovision stage 2: this script will be executed upon boot if the extroot was successfully mounted (i.e. rc.local is run from the extroot overlay)
 
-. /root/autoprovision-functions.sh
+. /etc/auto-provision/autoprovision-functions.sh
 
 installPackages()
 {
