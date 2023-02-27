@@ -4,6 +4,32 @@
 
 . /etc/auto-provision/autoprovision-functions.sh
 
+# Verify we are connected to the Internet
+is_connected() {
+    ping -q -c3 1.1.1.1 >/dev/null 2>&1
+    return $?
+}
+
+# Log to the system log and echo if needed
+log_say()
+{
+    echo "${1}"
+    logger "${1}"
+}
+
+# Fix our DNS and update packages and do not check https certs
+fixPackagesDNS()
+{
+    log_say "Fixing DNS and installing required packages for opkg"
+    # Set our router's dns
+    echo "nameserver 1.1.1.1" > /etc/resolv.conf
+
+    log_say "Installing opkg packages"
+    opkg --no-check-certificate update
+    opkg --no-check-certificate install wget-ssl unzip ca-bundle ca-certificates
+    opkg --no-check-certificate install git git-http jq curl unzip
+}
+
 installPackages()
 {
     signalAutoprovisionWaitingForUser
@@ -19,27 +45,27 @@ installPackages()
     log "Autoprovisioning stage2 is about to install packages"
    sed -i 's,https,http,g' /etc/opkg/distfeeds.conf;
 
-  echo "updating all packages!"
+  log_say "updating all packages!"
 
-   echo "                                                                      "
-   echo " ███████████             ███                         █████            "
-   echo "░░███░░░░░███           ░░░                         ░░███             "
-   echo " ░███    ░███ ████████  ████  █████ █████  ██████   ███████    ██████ "
-   echo " ░██████████ ░░███░░███░░███ ░░███ ░░███  ░░░░░███ ░░░███░    ███░░███"
-   echo " ░███░░░░░░   ░███ ░░░  ░███  ░███  ░███   ███████   ░███    ░███████ "
-   echo " ░███         ░███      ░███  ░░███ ███   ███░░███   ░███ ███░███░░░  "
-   echo " █████        █████     █████  ░░█████   ░░████████  ░░█████ ░░██████ "
-   echo "░░░░░        ░░░░░     ░░░░░    ░░░░░     ░░░░░░░░    ░░░░░   ░░░░░░  "
-   echo "                                                                      "
-   echo "                                                                      "
-   echo " ███████████                        █████                             "
-   echo "░░███░░░░░███                      ░░███                              "
-   echo " ░███    ░███   ██████  █████ ████ ███████    ██████  ████████        "
-   echo " ░██████████   ███░░███░░███ ░███ ░░░███░    ███░░███░░███░░███       "
-   echo " ░███░░░░░███ ░███ ░███ ░███ ░███   ░███    ░███████  ░███ ░░░        "
-   echo " ░███    ░███ ░███ ░███ ░███ ░███   ░███ ███░███░░░   ░███            "
-   echo " █████   █████░░██████  ░░████████  ░░█████ ░░██████  █████           "
-   echo "░░░░░   ░░░░░  ░░░░░░    ░░░░░░░░    ░░░░░   ░░░░░░  ░░░░░            "
+   log_say "                                                                      "
+   log_say " ███████████             ███                         █████            "
+   log_say "░░███░░░░░███           ░░░                         ░░███             "
+   log_say " ░███    ░███ ████████  ████  █████ █████  ██████   ███████    ██████ "
+   log_say " ░██████████ ░░███░░███░░███ ░░███ ░░███  ░░░░░███ ░░░███░    ███░░███"
+   log_say " ░███░░░░░░   ░███ ░░░  ░███  ░███  ░███   ███████   ░███    ░███████ "
+   log_say " ░███         ░███      ░███  ░░███ ███   ███░░███   ░███ ███░███░░░  "
+   log_say " █████        █████     █████  ░░█████   ░░████████  ░░█████ ░░██████ "
+   log_say "░░░░░        ░░░░░     ░░░░░    ░░░░░     ░░░░░░░░    ░░░░░   ░░░░░░  "
+   log_say "                                                                      "
+   log_say "                                                                      "
+   log_say " ███████████                        █████                             "
+   log_say "░░███░░░░░███                      ░░███                              "
+   log_say " ░███    ░███   ██████  █████ ████ ███████    ██████  ████████        "
+   log_say " ░██████████   ███░░███░░███ ░███ ░░░███░    ███░░███░░███░░███       "
+   log_say " ░███░░░░░███ ░███ ░███ ░███ ░███   ░███    ░███████  ░███ ░░░        "
+   log_say " ░███    ░███ ░███ ░███ ░███ ░███   ░███ ███░███░░░   ░███            "
+   log_say " █████   █████░░██████  ░░████████  ░░█████ ░░██████  █████           "
+   log_say "░░░░░   ░░░░░  ░░░░░░    ░░░░░░░░    ░░░░░   ░░░░░░  ░░░░░            "
 
    opkg update
    #Go Go Packages
@@ -59,11 +85,11 @@ installPackages()
    opkg install rpcd-mod-luci luci-app-statistics luci-app-samba4 samba4-server luci-mod-admin-full luci-mod-network luci-mod-status luci-mod-system kmod-usb-net-cdc-eem
    opkg install kmod-usb-net-cdc-ether kmod-usb-net-cdc-subset kmod-nls-base kmod-usb-core kmod-usb-net kmod-usb-net-cdc-ether kmod-usb2 kmod-usb-net-ipheth
    opkg install usbmuxd libimobiledevice usbutils luci-app-nlbwmon luci-app-adblock nano ttyd fail2ban speedtest-netperf opkg install vsftpd samba36-server luci-app-samba
-   echo "Installing TorGuard Wireguard..."
+   log_say "Installing TorGuard Wireguard..."
    opkg install /etc/luci-app-tgwireguard_1.0.3-1_all.ipk
 
   ## V2RAYA INSTALLER ##
-   echo "Installing V2rayA..."
+   log_say "Installing V2rayA..."
   ## download
 
   opkg update; opkg install unzip wget-ssl
@@ -92,8 +118,9 @@ autoprovisionStage2()
     else
         signalAutoprovisionWorking
 
-	echo Updating system time using ntp; otherwise the openwrt.org certificates are rejected as not yet valid.
-        ntpd -d -q -n -p 0.openwrt.pool.ntp.org
+    echo "nameserver 1.1.1.1" > /etc/resolv.conf
+	log_say "Updating system time using ntp; otherwise the openwrt.org certificates are rejected as not yet valid."
+    ntpd -d -q -n -p 0.openwrt.pool.ntp.org
 
         # CUSTOMIZE: with an empty argument it will set a random password and only ssh key based login will work.
         # please note that stage2 requires internet connection to install packages and you most probably want to log in
@@ -122,5 +149,14 @@ EOF
         reboot
     fi
 }
+
+# Check and wait for Internet connection
+while ! is_connected; do
+    log_say "Waiting for Internet connection..."
+    sleep 1
+done
+log_say "Internet connection established"
+
+fixPackagesDNS
 
 autoprovisionStage2
